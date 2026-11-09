@@ -3,7 +3,7 @@
 ## Frontend
 - Primary design system: official shadcn/ui, Base UI primitives, Nova style. Source lives in `frontend/src`; production assets live in `frontend/dist`.
 - Use Tailwind v4 semantic tokens from `frontend/src/index.css`. Do not mix in a second UI kit or CSS-in-JS system.
-- Consult `DESIGN.md` and the installed official shadcn skill before component work. Read `components.json`; use the configured aliases and Base UI `render` APIs, not Radix `asChild` APIs.
+- Consult `docs/DESIGN.md` and the installed official shadcn skill before component work. Read `components.json`; use the configured aliases and Base UI `render` APIs, not Radix `asChild` APIs.
 - Prefer existing official components/blocks. Use shadcn MCP registry discovery where appropriate; otherwise use the official CLI from `frontend/`. Search the explicitly requested official @shadcn registry, read component docs, and inspect generated files.
 - Check installed components before adding more. Fix generated utility imports to `@/lib/utils`; keep component imports through that shared alias. The generated utility re-exports the official `cn` package.
 - Shared primitives belong in `src/components/ui`; application compositions in `src/components`; pages in `src/pages`; API/types/formatting in `src/lib`.
@@ -29,4 +29,4 @@
 
 ## Connect Devices prototype
 
-The primary frontend now includes Connect Devices. Read CONNECT-DEVICES.md for companion/build setup and DISTRIBUTED-RESEARCH.md for compatibility, security and milestone status. cluster.py, connectnet.py, companion.py and distributed.py add separate authenticated LAN transport and experimental inference workflows. Existing single-device protocols and recommendations are unchanged. Never equate discovery, pairing or a transport fixture with proven shared-model inference. Phone hardware testing remains pending; all virtual RAM is excluded from physical capacity. Run the complete Python and frontend suites after changes. Do not package runtime reports, keys or pairing credentials.
+The primary frontend now includes Connect Devices. Read CONNECT-DEVICES.md for companion/build setup and docs/DISTRIBUTED-RESEARCH.md for compatibility, security and milestone status. cluster.py, connectnet.py, companion.py and distributed.py add separate authenticated LAN transport and experimental inference workflows. Existing single-device protocols and recommendations are unchanged. Never equate discovery, pairing or a transport fixture with proven shared-model inference. Phone hardware testing remains pending; all virtual RAM is excluded from physical capacity. Run the complete Python and frontend suites after changes. Do not package runtime reports, keys or pairing credentials.

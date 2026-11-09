@@ -33,7 +33,7 @@ After changes, rebuild `frontend/dist` before sharing or using the normal launch
 
 ## Design and instructions
 
-Read `DESIGN.md` and `AGENTS.md`. Components use semantic colors and common tokens in `src/index.css`. Official primitives are source-owned and reusable; inspect upstream diffs before replacing local changes. Generated CLI imports referring to a bare `cn` were corrected to the configured `@/lib/utils` alias.
+Read `DESIGN.md` and `../AGENTS.md`. Components use semantic colors and common tokens in `src/index.css`. Official primitives are source-owned and reusable; inspect upstream diffs before replacing local changes. Generated CLI imports referring to a bare `cn` were corrected to the configured `@/lib/utils` alias.
 
 ## shadcn MCP and skill
 
@@ -53,4 +53,4 @@ In PowerShell, quote registry names beginning with @, for example `npx shadcn@la
 
 ## Connect Devices addition
 
-The new lazy-loaded Connect Devices page uses the existing Sidebar, Card, Dialog, Field, Alert, Empty and Table primitives. Additive /api/connect endpoints provide discovery, approval status, connection tests, source companion download and experimental inference. Existing single-device API shapes and test protocols are preserved. See CONNECT-DEVICES.md and DISTRIBUTED-RESEARCH.md for setup and validation boundaries.
+The new lazy-loaded Connect Devices page uses the existing Sidebar, Card, Dialog, Field, Alert, Empty and Table primitives. Additive /api/connect endpoints provide discovery, approval status, connection tests, and a pairing-only companion download. Existing single-device API shapes and test protocols are preserved. See ../CONNECT-DEVICES.md and DISTRIBUTED-RESEARCH.md for setup and validation boundaries.

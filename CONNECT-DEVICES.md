@@ -12,7 +12,7 @@ Phone compute is unavailable in this preview.
 4. Approve on the phone and confirm the match on Windows. You can revoke trust from either device.
 
 If discovery is blocked, enter the phone's Wi-Fi address manually. Read the
-[architecture notes](DEVICES-ARCHITECTURE.md) for the pairing and trust flow.
+[architecture notes](docs/DEVICES-ARCHITECTURE.md) for the pairing and trust flow.
 
 ## Termux pairing fallback
 

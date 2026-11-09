@@ -22,6 +22,6 @@ export default defineConfig(({ command }) => {
     }],
     resolve: { alias: { "@": path.resolve(import.meta.dirname, "./src") } },
     server: { host: "127.0.0.1", proxy: backend ? { "/api": { target: backend, changeOrigin: true } } : undefined },
-    build: { outDir: "dist", emptyOutDir: true },
+    build: { outDir: "dist", emptyOutDir: true, license: { fileName: "THIRD-PARTY-LICENSES.md" } },
   };
 });

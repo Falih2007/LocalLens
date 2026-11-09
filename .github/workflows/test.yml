@@ -1,0 +1,40 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    runs-on: windows-2025
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
+        with:
+          node-version: '24'
+      - name: Build and test frontend
+        working-directory: frontend
+        shell: bash
+        run: |
+          set -e
+          npm ci
+          npm run build
+          npm test
+      - name: Test backend and journal
+        shell: bash
+        run: |
+          set -e
+          python -m pip install --target vendor -r requirements-devices.txt
+          python -m unittest discover -s tests -v
+          node tests/test_journal.cjs
+          python package_project.py --runtime-only --output ../LocalLens-Windows-preview.zip
