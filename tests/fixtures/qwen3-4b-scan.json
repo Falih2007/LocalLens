@@ -1,0 +1,288 @@
+{
+  "schema_version": "1.0",
+  "id": "20261027T215817-scan-c28b2251",
+  "kind": "automatic-model-scan",
+  "started_at": "2026-10-27T21:58:20.957249+00:00",
+  "hardware": {
+    "os": "Windows-10-10.0.26300-SP0",
+    "cpu": "Intel(R) Core(TM) Ultra 7 155H",
+    "threads": 22,
+    "ram_gib": 31.43,
+    "available_gib": 17.46,
+    "gpus": [
+      {
+        "Name": "Intel(R) Arc(TM) Graphics",
+        "DriverVersion": "32.0.101.8724"
+      }
+    ],
+    "npus": [
+      {
+        "FriendlyName": "Intel(R) AI Boost",
+        "Status": "OK"
+      }
+    ],
+    "warnings": [
+      "GPU memory is intentionally not inferred from WMI AdapterRAM; integrated graphics share system memory."
+    ],
+    "detected_at": "2026-10-27T21:58:17.663969+00:00"
+  },
+  "engine": {
+    "url": "https://github.com/ggml-org/llama.cpp/releases/download/b11900/llama-b11900-bin-win-vulkan-x64.zip",
+    "bytes": 37051563,
+    "sha256": "baf0183b1906d7cc0cfe9a0bd3fae34ceb4048acecc371ff3b7a91456783d051",
+    "build": "b11900 Vulkan x64"
+  },
+  "plan": {
+    "mode": "quick",
+    "candidates": [
+      {
+        "name": "Qwen3 4B",
+        "parameters_b": 4,
+        "repo": "Qwen/Qwen3-4B-GGUF",
+        "revision": "bc640142c66e1fdd12af0bd68f40445458f3869b",
+        "filename": "Qwen3-4B-Q4_K_M.gguf",
+        "bytes": 2497280256,
+        "sha256": "7485fe6f11af29433bc51cab58009521f205840f5b4ae3a32fa7f92e8534fdf5",
+        "license": "Apache-2.0",
+        "quantization": "Q4_K_M",
+        "estimated_budget_gib": 4.67
+      },
+      {
+        "name": "Qwen3 1.7B",
+        "parameters_b": 1.7,
+        "repo": "Qwen/Qwen3-1.7B-GGUF",
+        "revision": "90862c4b9d2787eaed51d12237eafdfe7c5f6077",
+        "filename": "Qwen3-1.7B-Q8_0.gguf",
+        "bytes": 1834426016,
+        "sha256": "061b54daade076b5d3362dac252678d17da8c68f07560be70818cace6590cb1a",
+        "license": "Apache-2.0",
+        "quantization": "Q8_0",
+        "estimated_budget_gib": 3.96
+      },
+      {
+        "name": "Qwen3 0.6B",
+        "parameters_b": 0.6,
+        "repo": "Qwen/Qwen3-0.6B-GGUF",
+        "revision": "23749fefcc72300e3a2ad315e1317431b06b590a",
+        "filename": "Qwen3-0.6B-Q8_0.gguf",
+        "bytes": 639446688,
+        "sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+        "license": "Apache-2.0",
+        "quantization": "Q8_0",
+        "estimated_budget_gib": 2.68
+      }
+    ],
+    "reserve_gib": 6.29,
+    "minimum_tokens_per_second": 15.0,
+    "max_download_bytes": 5008204523,
+    "first_download_bytes": 2534331819,
+    "scratch_needed_bytes": 3439068441,
+    "prompt": "Explain how a laptop can run an AI model locally. Give three practical benefits and two limitations, in clear language for a beginner.",
+    "context_tokens": 4096,
+    "output_tokens": 128,
+    "repetitions": 2,
+    "policy": "Largest comfortable candidate in the selected scan, not a universal model-quality ranking. Test GPU then CPU; stop at the first candidate with a passing backend. All test downloads are removed."
+  },
+  "prompt": "Explain how a laptop can run an AI model locally. Give three practical benefits and two limitations, in clear language for a beginner.",
+  "formatted_prompt": "<|im_start|>system\nYou are a helpful assistant. Be clear and concise.<|im_end|>\n<|im_start|>user\nExplain how a laptop can run an AI model locally. Give three practical benefits and two limitations, in clear language for a beginner. /no_think<|im_end|>\n<|im_start|>assistant\n<think>\n\n</think>\n\n",
+  "attempts": [
+    {
+      "model": {
+        "name": "Qwen3 4B",
+        "parameters_b": 4,
+        "repo": "Ollama library/qwen3:4b",
+        "revision": "3e4cb14174460404e7a233e531675303b2fbf7749c02f91864fe311ab6344e4f",
+        "filename": "Qwen3-4B-Q4_K_M.gguf",
+        "bytes": 2497280480,
+        "sha256": "3e4cb14174460404e7a233e531675303b2fbf7749c02f91864fe311ab6344e4f",
+        "license": "Apache-2.0",
+        "quantization": "Q4_K_M",
+        "estimated_budget_gib": 4.67,
+        "source": "verified existing Ollama cache; original preserved"
+      },
+      "target": "gpu",
+      "evidence": "measured",
+      "status": "completed",
+      "command": [
+        "C:\\LocalLensFixture\\outputs\\LocalLens\\data\\temporary\\scan-0ca063eb0020440ba2f52a0242cd8174\\engine\\llama-server.exe",
+        "-m",
+        "C:\\LocalLensFixture\\outputs\\LocalLens\\data\\temporary\\scan-0ca063eb0020440ba2f52a0242cd8174\\Qwen3-4B-Q4_K_M.gguf",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "56491",
+        "--api-key",
+        "[ephemeral session key]",
+        "-c",
+        "4096",
+        "-np",
+        "1",
+        "-t",
+        "8",
+        "-ngl",
+        "99",
+        "--no-webui",
+        "--no-warmup",
+        "-v"
+      ],
+      "context_tokens": 4096,
+      "samples": [
+        {
+          "cache_n": 0,
+          "prompt_n": 59,
+          "prompt_ms": 222.031,
+          "prompt_per_token_ms": 3.7632372881355933,
+          "prompt_per_second": 265.72865951150965,
+          "predicted_n": 128,
+          "predicted_ms": 6241.682,
+          "predicted_per_token_ms": 49.14710236220472,
+          "predicted_per_second": 20.347079521193166
+        },
+        {
+          "cache_n": 0,
+          "prompt_n": 59,
+          "prompt_ms": 238.688,
+          "prompt_per_token_ms": 4.045559322033898,
+          "prompt_per_second": 247.18460919694328,
+          "predicted_n": 128,
+          "predicted_ms": 6838.387,
+          "predicted_per_token_ms": 53.84556692913386,
+          "predicted_per_second": 18.571631000117424
+        }
+      ],
+      "protocol": "One 16-token warmup, two uncached 128-token completions, temperature 0, seed 42, ignore_eos true.",
+      "log": "4B-gpu-engine.log",
+      "gpu_layers_offloaded": 37,
+      "model_layers": 37,
+      "request_seconds": [
+        6.469,
+        7.328
+      ],
+      "generated_samples": [
+        "Okay, the user wants me to explain how a laptop can run an AI model locally in simple terms for a beginner. They specifically asked for three practical benefits and two limitations, with no thinking process shown. \n\nHmm, I need to keep this super clear and beginner-friendly. The user probably just wants a quick understanding without technical jargon. They might be a student, a hobbyist, or someone exploring AI locally. \n\nFirst, I'll explain the basic idea: \"Your laptop has a special part called the CPU that can run small AI models.\" That's simple enough. I should avoid terms like \"neural networks\" or \"",
+        "Okay, the user wants me to explain how a laptop can run an AI model locally in simple terms for a beginner. They specifically asked for three practical benefits and two limitations, with no thinking process shown. \n\nHmm, I need to keep this super clear and beginner-friendly. The user probably just wants a quick understanding without technical jargon. They might be a student, a hobbyist, or someone exploring AI locally. \n\nFirst, I'll explain the basic idea: \"Your laptop has a special part called the CPU that can run small AI models.\" That's simple enough. I should avoid terms like \"neural networks\" or \""
+      ],
+      "minimum_free_ram_gib": 13.21,
+      "generation_tokens_per_second": 19.46,
+      "slowest_tokens_per_second": 18.57,
+      "comfortable": true,
+      "status_label": "Comfortable"
+    },
+    {
+      "model": {
+        "name": "Qwen3 4B",
+        "parameters_b": 4,
+        "repo": "Ollama library/qwen3:4b",
+        "revision": "3e4cb14174460404e7a233e531675303b2fbf7749c02f91864fe311ab6344e4f",
+        "filename": "Qwen3-4B-Q4_K_M.gguf",
+        "bytes": 2497280480,
+        "sha256": "3e4cb14174460404e7a233e531675303b2fbf7749c02f91864fe311ab6344e4f",
+        "license": "Apache-2.0",
+        "quantization": "Q4_K_M",
+        "estimated_budget_gib": 4.67,
+        "source": "verified existing Ollama cache; original preserved"
+      },
+      "target": "cpu",
+      "evidence": "measured",
+      "status": "completed",
+      "command": [
+        "C:\\LocalLensFixture\\outputs\\LocalLens\\data\\temporary\\scan-0ca063eb0020440ba2f52a0242cd8174\\engine\\llama-server.exe",
+        "-m",
+        "C:\\LocalLensFixture\\outputs\\LocalLens\\data\\temporary\\scan-0ca063eb0020440ba2f52a0242cd8174\\Qwen3-4B-Q4_K_M.gguf",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "54612",
+        "--api-key",
+        "[ephemeral session key]",
+        "-c",
+        "4096",
+        "-np",
+        "1",
+        "-t",
+        "8",
+        "-ngl",
+        "0",
+        "--no-webui",
+        "--no-warmup",
+        "-v",
+        "--no-kv-offload"
+      ],
+      "context_tokens": 4096,
+      "samples": [
+        {
+          "cache_n": 0,
+          "prompt_n": 59,
+          "prompt_ms": 505.977,
+          "prompt_per_token_ms": 8.575881355932204,
+          "prompt_per_second": 116.60609079068813,
+          "predicted_n": 128,
+          "predicted_ms": 12159.623,
+          "predicted_per_token_ms": 95.74506299212598,
+          "predicted_per_second": 10.444402758210513
+        },
+        {
+          "cache_n": 0,
+          "prompt_n": 59,
+          "prompt_ms": 511.598,
+          "prompt_per_token_ms": 8.671152542372882,
+          "prompt_per_second": 115.32492308414028,
+          "predicted_n": 128,
+          "predicted_ms": 13880.895,
+          "predicted_per_token_ms": 109.29838582677165,
+          "predicted_per_second": 9.149265951511051
+        }
+      ],
+      "protocol": "One 16-token warmup, two uncached 128-token completions, temperature 0, seed 42, ignore_eos true.",
+      "log": "4B-cpu-engine.log",
+      "request_seconds": [
+        12.672,
+        14.406
+      ],
+      "generated_samples": [
+        "Okay, the user wants me to explain how a laptop can run an AI model locally in simple terms for a beginner. They specifically asked for three practical benefits and two limitations, with no thinking process shown. \n\nFirst, I need to make sure I understand what \"run an AI model locally\" means. It's about executing AI tasks directly on the user's laptop instead of using cloud services. For beginners, I should avoid technical jargon like \"neural networks\" or \"training data\" - focus on real-world examples they'd recognize.\n\nHmm... the user said \"no_think\" which probably means they don't want any internal",
+        "Okay, the user wants me to explain how a laptop can run an AI model locally in simple terms for a beginner. They specifically asked for three practical benefits and two limitations, with no thinking process shown. \n\nFirst, I need to make sure I understand what \"run an AI model locally\" means. It's about executing AI tasks directly on the user's laptop instead of using cloud services. For beginners, I should avoid technical jargon like \"neural networks\" or \"training data\" - focus on real-world examples they'd recognize.\n\nHmm... the user said \"no_think\" which probably means they don't want any internal"
+      ],
+      "minimum_free_ram_gib": 13.79,
+      "generation_tokens_per_second": 9.8,
+      "slowest_tokens_per_second": 9.15,
+      "comfortable": false,
+      "status_label": "Below comfort target"
+    }
+  ],
+  "recommendation": {
+    "model": {
+      "name": "Qwen3 4B",
+      "parameters_b": 4,
+      "repo": "Ollama library/qwen3:4b",
+      "revision": "3e4cb14174460404e7a233e531675303b2fbf7749c02f91864fe311ab6344e4f",
+      "filename": "Qwen3-4B-Q4_K_M.gguf",
+      "bytes": 2497280480,
+      "sha256": "3e4cb14174460404e7a233e531675303b2fbf7749c02f91864fe311ab6344e4f",
+      "license": "Apache-2.0",
+      "quantization": "Q4_K_M",
+      "estimated_budget_gib": 4.67,
+      "source": "verified existing Ollama cache; original preserved"
+    },
+    "target": "gpu",
+    "evidence": "measured",
+    "generation_tokens_per_second": 19.46,
+    "slowest_tokens_per_second": 18.57,
+    "minimum_free_ram_gib": 13.21,
+    "reason": "Largest candidate in this quick scan that passed both measured runs at \u226515 tok/s while leaving at least 6.3 GiB free. Faster passing backend selected.",
+    "scope": "Best comfortable fit among the selected scan candidates. Quick mode excludes 8B; larger and other model families are not ranked."
+  },
+  "cleanup": {
+    "status": "deleted",
+    "message": "Temporary model and engine downloads removed."
+  },
+  "limitations": [
+    "Short prompt, 4096-token context, single user; longer contexts and background workloads can be slower.",
+    "This tests speed and system-memory headroom, not answer quality or NPU execution.",
+    "GPU memory capacity is not measured separately. GPU allocation failures are recorded and CPU is tried.",
+    "Token throughput is the engine decode timing, not whole-request latency."
+  ],
+  "current_model": "Qwen3 4B",
+  "status": "completed",
+  "finished_at": "2026-10-27T21:59:41.847913+00:00"
+}

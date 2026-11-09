@@ -1,0 +1,193 @@
+{
+  "schema_version": "1.0",
+  "id": "20261026T142143-87fa5c52",
+  "evidence": "measured",
+  "engine": "llama-bench",
+  "started_at": "2026-10-26T14:21:46.235367+00:00",
+  "finished_at": "2026-10-26T14:21:46.882559+00:00",
+  "target_requested": "gpu",
+  "model": {
+    "path": "C:\\LocalLensFixture\\work\\validation-assets\\stories15M-q4_0.gguf",
+    "bytes": 19077344,
+    "mtime_ns": 1793024284446455500
+  },
+  "hardware": {
+    "os": "Windows-10-10.0.26300-SP0",
+    "cpu": "Intel(R) Core(TM) Ultra 7 155H",
+    "threads": 22,
+    "ram_gib": 31.43,
+    "available_gib": 16.34,
+    "gpus": [
+      {
+        "Name": "Intel(R) Arc(TM) Graphics",
+        "DriverVersion": "32.0.101.8724"
+      }
+    ],
+    "npus": [
+      {
+        "FriendlyName": "Intel(R) AI Boost",
+        "Status": "OK"
+      }
+    ],
+    "warnings": [
+      "GPU memory is intentionally not inferred from WMI AdapterRAM; integrated graphics share system memory."
+    ],
+    "detected_at": "2026-10-26T14:21:43.042546+00:00"
+  },
+  "command": [
+    "C:\\LocalLensFixture\\work\\validation-assets\\llama\\llama-bench.exe",
+    "-m",
+    "C:\\LocalLensFixture\\work\\validation-assets\\stories15M-q4_0.gguf",
+    "-p",
+    "128",
+    "-n",
+    "32",
+    "-r",
+    "3",
+    "-t",
+    "4",
+    "-ngl",
+    "99",
+    "-o",
+    "json",
+    "-v",
+    "-nkvo",
+    "0"
+  ],
+  "metrics": [
+    {
+      "test": "prompt",
+      "tokens_per_second": 25654.839247,
+      "stddev": 4779.34053,
+      "backend": "Vulkan",
+      "gpu_info": "Intel(R) Arc(TM) Graphics",
+      "gpu_layers_requested": 99
+    },
+    {
+      "test": "generation",
+      "tokens_per_second": 781.662604,
+      "stddev": 63.361093,
+      "backend": "Vulkan",
+      "gpu_info": "Intel(R) Arc(TM) Graphics",
+      "gpu_layers_requested": 99
+    }
+  ],
+  "raw": [
+    {
+      "build_commit": "74b104c9b",
+      "build_number": 11900,
+      "cpu_info": "Intel(R) Core(TM) Ultra 7 155H",
+      "gpu_info": "Intel(R) Arc(TM) Graphics",
+      "backends": "Vulkan",
+      "model_filename": "C:\\LocalLensFixture\\work\\validation-assets\\stories15M-q4_0.gguf",
+      "model_type": "llama ?B Q4_0",
+      "model_size": 18350208,
+      "model_n_params": 24407712,
+      "n_batch": 2048,
+      "n_ubatch": 512,
+      "n_threads": 4,
+      "cpu_mask": "0x0",
+      "cpu_strict": false,
+      "poll": 50,
+      "type_k": "f16",
+      "type_v": "f16",
+      "n_gpu_layers": 99,
+      "n_cpu_moe": 0,
+      "split_mode": "layer",
+      "main_gpu": 0,
+      "no_kv_offload": false,
+      "flash_attn": -1,
+      "devices": "auto",
+      "tensor_split": "0.00",
+      "tensor_buft_overrides": "none",
+      "load_mode": "auto",
+      "lazy_mode": "auto",
+      "embeddings": false,
+      "no_op_offload": 0,
+      "no_host": false,
+      "repack": true,
+      "fit_target": 0,
+      "fit_min_ctx": 0,
+      "n_prompt": 128,
+      "n_gen": 0,
+      "n_depth": 0,
+      "test_time": "2026-10-26T14:21:46Z",
+      "avg_ns": 5099900,
+      "stddev_ns": 893614,
+      "avg_ts": 25654.839247,
+      "stddev_ts": 4779.34053,
+      "samples_ns": [
+        5271300,
+        5895400,
+        4133000
+      ],
+      "samples_ts": [
+        24282.4,
+        21711.8,
+        30970.2
+      ]
+    },
+    {
+      "build_commit": "74b104c9b",
+      "build_number": 11900,
+      "cpu_info": "Intel(R) Core(TM) Ultra 7 155H",
+      "gpu_info": "Intel(R) Arc(TM) Graphics",
+      "backends": "Vulkan",
+      "model_filename": "C:\\LocalLensFixture\\work\\validation-assets\\stories15M-q4_0.gguf",
+      "model_type": "llama ?B Q4_0",
+      "model_size": 18350208,
+      "model_n_params": 24407712,
+      "n_batch": 2048,
+      "n_ubatch": 512,
+      "n_threads": 4,
+      "cpu_mask": "0x0",
+      "cpu_strict": false,
+      "poll": 50,
+      "type_k": "f16",
+      "type_v": "f16",
+      "n_gpu_layers": 99,
+      "n_cpu_moe": 0,
+      "split_mode": "layer",
+      "main_gpu": 0,
+      "no_kv_offload": false,
+      "flash_attn": -1,
+      "devices": "auto",
+      "tensor_split": "0.00",
+      "tensor_buft_overrides": "none",
+      "load_mode": "auto",
+      "lazy_mode": "auto",
+      "embeddings": false,
+      "no_op_offload": 0,
+      "no_host": false,
+      "repack": true,
+      "fit_target": 0,
+      "fit_min_ctx": 0,
+      "n_prompt": 0,
+      "n_gen": 32,
+      "n_depth": 0,
+      "test_time": "2026-10-26T14:21:46Z",
+      "avg_ns": 41127133,
+      "stddev_ns": 3493093,
+      "avg_ts": 781.662604,
+      "stddev_ts": 63.361093,
+      "samples_ns": [
+        38871900,
+        45150800,
+        39358700
+      ],
+      "samples_ts": [
+        823.217,
+        708.736,
+        813.035
+      ]
+    }
+  ],
+  "artifacts": {
+    "stdout": "stdout.json",
+    "stderr": "stderr.log"
+  },
+  "limitations": [
+    "llama-bench excludes tokenization and sampling time.",
+    "GPU offload requested is not proof that every layer ran on the GPU; inspect stderr.log."
+  ]
+}

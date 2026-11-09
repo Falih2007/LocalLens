@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://locallens.local/schemas/connection.schema.json",
+  "title": "LocalLens connection or distributed experiment evidence",
+  "type": "object",
+  "required": ["schema_version", "kind", "evidence"],
+  "properties": {
+    "schema_version": { "const": "1.0" },
+    "kind": { "enum": ["connection", "distributed_experiment"] },
+    "evidence": { "enum": ["measured", "experimental"] },
+    "finished_at": { "type": "number" },
+    "device_id": { "type": "string" },
+    "median_roundtrip_ms": { "type": "number", "minimum": 0 },
+    "payload_bytes_each_way": { "type": "integer", "minimum": 0 },
+    "roundtrip_payload_mib_s": { "type": "number", "exclusiveMinimum": 0 },
+    "model_parallel_verified": { "const": false },
+    "status": { "enum": ["running", "completed", "incomplete", "failed", "cancelled"] },
+    "runs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["mode", "status", "samples"],
+        "properties": {
+          "mode": { "enum": ["laptop_cpu", "phone_rpc_only", "laptop_cpu_and_phone"] },
+          "status": { "enum": ["failed", "completed"] },
+          "samples": { "type": "array", "items": { "type": "object", "required": ["timings", "content"] } },
+          "load_seconds": { "type": ["number", "null"], "minimum": 0 },
+          "peak_sampled_local_rss_bytes": { "type": ["integer", "null"], "minimum": 0 },
+          "peak_sampled_phone_rss_bytes": { "type": ["integer", "null"], "minimum": 0 },
+          "minimum_local_available_gib": { "type": ["number", "null"], "minimum": 0 },
+          "minimum_phone_available_gib": { "type": ["number", "null"], "minimum": 0 }
+        }
+      }
+    }
+  },
+  "allOf": [
+    { "if": { "properties": { "kind": { "const": "connection" } } }, "then": { "required": ["device_id", "median_roundtrip_ms", "payload_bytes_each_way", "protocol"], "properties": { "evidence": { "const": "measured" } } } },
+    { "if": { "properties": { "kind": { "const": "distributed_experiment" } } }, "then": { "required": ["model", "runs", "status", "capacity_expansion"], "properties": { "evidence": { "const": "experimental" } } } }
+  ]
+}

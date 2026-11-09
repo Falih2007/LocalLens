@@ -1,0 +1,18 @@
+const assert=require('node:assert/strict');
+const fs=require('node:fs');const path=require('node:path');const vm=require('node:vm');
+const root=path.resolve(__dirname,'..');const context={};
+vm.runInNewContext(fs.readFileSync(path.join(root,'ui/app.js'),'utf8').split('/* APPLICATION UI */')[0],context);
+const journal=context.LocalLensJournal;
+const scan=JSON.parse(fs.readFileSync(path.join(__dirname,'fixtures/qwen3-4b-scan.json'),'utf8'));
+const manual=[JSON.parse(fs.readFileSync(path.join(__dirname,'fixtures/llama-bench-result.json'),'utf8'))];
+scan.device_scope="current";
+const rows=journal.entries({history:manual,scans:[scan]});
+assert.equal(rows.length,manual.length+2);
+assert.match(rows[0].model,/Qwen3 4B/);assert.equal(rows[0].target,'GPU');assert.equal(rows[0].metrics[0].value,19.46);assert.equal(rows[0].recommended,true);
+assert.equal(rows[1].target,'CPU');assert.equal(rows[1].metrics[0].value,9.8);assert.equal(rows[1].recommended,false);
+const html=journal.render(rows);assert.match(html,/Qwen3 4B/);assert.match(html,/19\.46/);assert.match(html,/9\.80/);assert.match(html,/Real prompt · automatic scan/);assert.match(html,/llama-bench/);assert.match(html,/Temporary test files deleted; results retained/);
+const failed=JSON.parse(JSON.stringify(scan));failed.attempts.forEach(a=>a.status='failed');assert.equal(journal.entries({scans:[failed]}).length,0);
+const missing=JSON.parse(JSON.stringify(scan));delete missing.attempts[0].generation_tokens_per_second;assert.equal(journal.entries({scans:[missing]}).length,1);
+const unsafe=JSON.parse(JSON.stringify(scan));unsafe.attempts[0].model.name='<script>bad</script>';assert(!journal.render(journal.entries({scans:[unsafe]})).includes('<script>'));
+assert.match(journal.render([]),/clean slate/);
+console.log('Journal regression passed: real saved 4B GPU/CPU records, newest-first order, recommendation, protocol labels, failed-score exclusion, escaping and empty state.');

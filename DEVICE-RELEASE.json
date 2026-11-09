@@ -1,0 +1,19 @@
+{
+  "version": "0.3.2-pairing-preview",
+  "date": "2026-10-29",
+  "apk": {
+    "filename": "LocalLens-Companion-debug.apk",
+    "bytes": 888036,
+    "sha256": "159456e790882cb1f90004a91b850954bb1ba1eb502d9fc87aeed8cb76da032e"
+  },
+  "tests": {
+    "python_passed": 41,
+    "frontend_passed": 18,
+    "kotlin_jvm_passed": 9,
+    "legacy_journal_passed": true
+  },
+  "android_build": "assembleDebug, testDebugUnitTest, lintDebug passed; 0 lint errors, 4 warnings",
+  "physical_native_android_pairing_tested": false,
+  "native_rpc_worker_bundled": false,
+  "legacy_termux_compute_preserved": true
+}
