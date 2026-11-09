@@ -14,9 +14,14 @@ The first real OPPO CPH2473 attempt successfully discovered protocol v2, but TLS
 
 Install this APK over 0.3.0, stop/start discovery, and pair again. The corrected key has a new alias, so its certificate fingerprint changes and must be verified anew. Existing trust must not be transferred to a new certificate automatically. This correction is built and unit-tested; successful TLS and pairing on the OPPO still require a device retry.
 
-This is a native Kotlin Android application, not a Termux launcher or a WebView. It implements discovery, approval, remembered trust, revocation and resource reporting. **This APK does not contain a llama.cpp worker and cannot perform inference.** The existing Termux companion remains the working compute path. Pairing does not pool RAM.
+This is a native Kotlin Android application, not a Termux launcher or a WebView. It implements discovery, approval, remembered trust, revocation and resource reporting. **This APK does not contain a llama.cpp worker and cannot perform inference.** Phone compute is unavailable in this preview. Pairing does not pool RAM.
 
 ## Install and try
+
+From `android/companion`, run `.\gradlew.bat assembleDebug` with the Android SDK
+and Java configured. The build writes `app/build/outputs/apk/debug/app-debug.apk`.
+To enable the Windows download button, copy that APK to
+`android/LocalLens-Companion-debug.apk` in the repository.
 
 1. Copy `android/LocalLens-Companion-debug.apk` onto your OPPO and open it. Android will ask whether the chosen file app may install this debug build. There is no need to enable developer mode or USB debugging for ordinary installation.
 2. Open LocalLens on the phone. Notifications are optional; allowing them makes pending requests easier to notice.

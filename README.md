@@ -1,6 +1,6 @@
 # Device pairing update
 
-Native Kotlin Android pairing preview and Windows mDNS discovery are now included. Open **Devices**, then **Android app** to download the debug APK, or use `android/LocalLens-Companion-debug.apk` directly. Installation and honest scope: [Android guide](android/companion/README.md), [architecture](DEVICES-ARCHITECTURE.md). The native APK supports pairing and device inventory; native compute remains unavailable. The existing Termux worker and benchmarking setup below are preserved. Older sections retain historical prototype notes; use the new guide for the current native-app scope.
+Native Kotlin Android pairing preview and Windows mDNS discovery are now included. Open **Devices**, then **Android app** to download the debug APK, or use `android/LocalLens-Companion-debug.apk` directly. Installation and honest scope: [Android guide](android/companion/README.md), [architecture](DEVICES-ARCHITECTURE.md). The native APK supports pairing and device inventory; native compute remains unavailable. Phone compute is disabled in this source preview. Desktop benchmarking remains available. Historical research notes describe earlier experiments.
 
 ---
 
@@ -8,7 +8,23 @@ Native Kotlin Android pairing preview and Windows mDNS discovery are now include
 
 A clean desktop MVP with actual Windows hardware detection, conservative memory-fit estimates, real llama-bench runs, local evidence and an optional Intel NPU runtime probe. Python standard library backend; the bundled frontend uses React, shadcn/ui and Tailwind. No accounts, analytics or CDN assets. The optional automatic scan downloads only its pinned engine and test models.
 
-## Start in two steps
+## Run from source
+
+Install a Node.js version compatible with the [frontend requirements](FRONTEND.md).
+From the repository root, run:
+
+```powershell
+cd frontend
+npm ci
+npm run build
+cd ..
+```
+
+Then launch LocalLens as described below. For native phone pairing, run
+`Setup-Devices.cmd` to install discovery support and build the APK using the
+[Android guide](android/companion/README.md).
+
+## Start LocalLens
 
 1. Install **Python 3.11 or newer** from https://www.python.org/downloads/windows/ (include the Python launcher).
 2. Double-click **Start-LocalLens.cmd**. Edge opens in an app-style desktop window. Keep the launcher running. Close it with Ctrl+C when finished. Closing the Edge window alone does not stop the backend. If the launcher is unavailable, open a terminal in this folder and run `python app.py`.

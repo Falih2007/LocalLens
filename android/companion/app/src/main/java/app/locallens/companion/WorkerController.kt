@@ -8,7 +8,7 @@ import org.json.JSONObject
 class WorkerController {
     val revision = "39febd2adb947b70da35e95f9351b3bf58ad170a"
     val ready = false
-    val reason = "Native RPC worker is not bundled in this pairing preview. Use the existing Termux companion for compute."
+    val reason = "Native RPC worker is not bundled in this pairing preview. Phone compute is unavailable in this preview."
     fun stop() = Unit
     fun runtime(): JSONObject = JSONObject().put("backend", "llama.cpp RPC").put("status", "unavailable")
         .put("expected_revision", revision).put("build_record_revision", JSONObject.NULL).put("reason", reason)

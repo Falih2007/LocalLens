@@ -41,8 +41,8 @@ describe("Connect Devices trust and evidence", () => {
       ),
     ).toBeVisible();
     expect(
-      screen.getByRole("button", { name: "Run real comparison" }),
-    ).toBeDisabled();
+      screen.queryByRole("button", { name: "Run real comparison" }),
+    ).not.toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Add device" }));
     await waitFor(() => expect(api).toHaveBeenCalledWith("connect/scan", {}));
   });

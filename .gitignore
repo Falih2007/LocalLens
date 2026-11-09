@@ -7,6 +7,7 @@ frontend/.vite/
 frontend/*.tsbuildinfo
 vendor/
 android/companion/.gradle/
+android/companion/.kotlin/
 android/companion/**/build/
 android/companion/local.properties
 

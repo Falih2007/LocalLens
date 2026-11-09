@@ -2,7 +2,6 @@ from pathlib import Path
 import autotest
 import device
 import cluster
-import distributed
 import io, zipfile
 from urllib.parse import unquote, urlsplit
 import re
@@ -19,21 +18,6 @@ PROC = None
 BUSY = False
 CLUSTER = cluster.Manager(DATA)
 
-
-def distributed_worker(config, folder):
-    global PROC, BUSY
-    def attach(proc):
-        global PROC
-        with LOCK: PROC = proc
-    try:
-        result = distributed.run(CLUSTER, config, folder, HARDWARE, lambda message: JOB.update(message=message), attach, lambda: JOB.get('status') == 'cancelled')
-        if JOB.get('status') != 'cancelled': JOB.update(status='completed' if result['status'] == 'completed' else 'failed', message='Experiment saved. Inspect participation evidence and limitations.', result_id=folder.name)
-    except Exception as exc:
-        if JOB.get('status') != 'cancelled': JOB.update(status='failed', message=str(exc))
-    finally:
-        with LOCK:
-            PROC = None; BUSY = False
-            (folder/'job.json').write_text(json.dumps(JOB, indent=2), encoding='utf-8')
 
 def now(): return datetime.now(timezone.utc).isoformat()
 def run(args, timeout=30):
@@ -198,7 +182,7 @@ class Handler(BaseHTTPRequestHandler):
         elif self.path=='/api/connect/companion':
             archive=io.BytesIO()
             with zipfile.ZipFile(archive,'w',zipfile.ZIP_DEFLATED) as bundle:
-                for name in ('companion.py','connectnet.py','android/setup-termux.sh','CONNECT-DEVICES.md'):
+                for name in ('companion.py','connectnet.py','CONNECT-DEVICES.md'):
                     bundle.write(ROOT/name,name)
             self.reply(200,archive.getvalue(),'application/zip')
         else: self.reply(404,{'error':'Not found'})
@@ -222,12 +206,7 @@ class Handler(BaseHTTPRequestHandler):
                 elif action=='sharing': result=CLUSTER.sharing(config.get('device_id'),config.get('enabled'))
                 elif action=='manual': result=CLUSTER.manual(config.get('host'),config.get('port',45460))
                 elif action=='experiment':
-                    with LOCK:
-                        if BUSY: self.reply(409,{'error':'A benchmark is already running'}); return
-                        folder=DATA/(datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S')+'-distributed-'+uuid.uuid4().hex[:8]);folder.mkdir(parents=True)
-                        BUSY=True;JOB.clear();JOB.update(status='running',kind='distributed',message='Preparing the real distributed experiment.',id=folder.name)
-                    threading.Thread(target=distributed_worker,args=(config,folder),daemon=True).start()
-                    self.reply(202,dict(JOB));return
+                    self.reply(403,{'error':'Phone compute is unavailable in this preview.'}); return
                 else: raise ValueError('Unknown connection action.')
                 self.reply(200,result)
             elif self.path=='/api/auto':

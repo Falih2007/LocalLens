@@ -72,7 +72,6 @@ type WorkerHardware = {
   runtime: { status: string; backend: string };
   inference_participation: string;
   battery_percent?: number;
-  sharing_enabled?: boolean;
 };
 export type Peer = {
   id: string;
@@ -142,9 +141,6 @@ export function ConnectPage({
   const [confirmed, setConfirmed] = useState(false);
   const [manualHost, setManualHost] = useState("");
   const [manualPort, setManualPort] = useState("45460");
-  const [executable, setExecutable] = useState("");
-  const [model, setModel] = useState("");
-  const [layers, setLayers] = useState(8);
   const load = useCallback(async () => {
     setCluster(await api<ClusterState>("connect/state"));
   }, []);
@@ -196,14 +192,13 @@ export function ConnectPage({
     setError(null);
     try {
       const result = await api<{ text: string }>("connect/guide");
-      onEvidence("Connect Devices · setup and experiment guide", result.text);
+      onEvidence("Connect Devices · setup guide", result.text);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Setup guide unavailable.");
     }
   };
   const connected =
     cluster?.devices.filter((p) => p.status === "connected") || [];
-  const computePeer = connected.find((peer) => peer.hardware?.runtime.status === "ready");
   const livePair = cluster?.devices.find((p) => p.id === pairing?.id) || pairing;
   useEffect(() => {
     if (livePair?.status === "connected") setPairing(null);
@@ -270,8 +265,7 @@ export function ConnectPage({
         <CardHeader>
           <CardTitle>Your compute circle</CardTitle>
           <CardDescription>
-            Connection status is live. Model-parallel inference remains
-            experimental.
+            Pair devices to see live connection status.
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-6">
@@ -425,7 +419,7 @@ export function ConnectPage({
                     {peer.hardware.runtime.status}
                   </dd>
                   <dt className="text-muted-foreground">Compute sharing</dt>
-                  <dd>{peer.hardware.sharing_enabled === true ? "Enabled on phone" : peer.protocol === "locallens-companion/2" ? "Unavailable in pairing preview" : "Controlled in Termux"}</dd>
+                  <dd>Unavailable in this preview</dd>
                   {peer.hardware.battery_percent != null && <><dt className="text-muted-foreground">Battery</dt><dd>{peer.hardware.battery_percent}%</dd></>}
                 </dl>
               )}
@@ -528,11 +522,7 @@ export function ConnectPage({
         <Info />
         <AlertTitle>Pairing is the first step</AlertTitle>
         <AlertDescription>
-          Exo currently has no verified Windows–Android path for this setup. The
-          experimental llama.cpp adapter can split work between laptop CPU and
-          phone CPU. Intel Arc and AI Boost NPU are not part of this first
-          experiment. A connected phone is not yet a verified compute
-          contributor.
+          This preview supports pairing and connection tests. Phone compute is unavailable.
         </AlertDescription>
       </Alert>
       <Card>
@@ -585,134 +575,6 @@ export function ConnectPage({
           </div>
         </CardContent>
       </Card>
-      <Card>
-        <CardHeader>
-          <CardTitle>One model. Two devices.</CardTitle>
-          <CardDescription>
-            Experimental comparison: laptop CPU, phone RPC, then a partial layer
-            split. No benchmark has run merely by opening this page.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-4">
-          <p className="text-sm text-muted-foreground">
-            First build the matching runtimes using Phone setup. Use a small
-            GGUF under 2 GiB. Results include real prompt and generation
-            timings, loading time, memory samples, RPC payload counts and
-            participation evidence. Phone-only retains a laptop coordinator.
-          </p>
-          <Button
-            variant="outline"
-            onClick={() => {
-              void downloadCompanion().catch((e) => setError(String(e)));
-            }}
-          >
-            <Download data-icon="inline-start" />
-            Download Termux fallback
-          </Button>
-          <details>
-            <summary className="cursor-pointer text-sm font-medium">
-              Advanced experiment setup
-            </summary>
-            <form
-              className="mt-5"
-              onSubmit={(event) => {
-                event.preventDefault();
-                if (computePeer)
-                  void act("experiment", {
-                    device_id: computePeer.id,
-                    executable,
-                    model,
-                    remote_layers: layers,
-                  });
-              }}
-            >
-              <FieldGroup>
-                <Field>
-                  <FieldLabel htmlFor="rpc-engine">
-                    RPC-enabled llama-server executable
-                  </FieldLabel>
-                  <Input
-                    id="rpc-engine"
-                    value={executable}
-                    onChange={(e) => setExecutable(e.target.value)}
-                    required
-                    placeholder="Choose the trusted build described in setup"
-                  />
-                </Field>
-                <Field>
-                  <FieldLabel htmlFor="rpc-model">
-                    Small GGUF model path
-                  </FieldLabel>
-                  <Input
-                    id="rpc-model"
-                    value={model}
-                    onChange={(e) => setModel(e.target.value)}
-                    required
-                  />
-                  <FieldDescription>
-                    Your existing model is preserved. This experiment does not
-                    download or delete it.
-                  </FieldDescription>
-                </Field>
-                <Field>
-                  <FieldLabel htmlFor="remote-layers">
-                    Layers to send to phone in the combined test
-                  </FieldLabel>
-                  <Input
-                    id="remote-layers"
-                    type="number"
-                    min={1}
-                    max={16}
-                    value={layers}
-                    onChange={(e) => setLayers(Number(e.target.value))}
-                    required
-                  />
-                </Field>
-                <Button
-                  type="submit"
-                  disabled={!!busy || data.busy || !computePeer}
-                >
-                  {busy === "experiment" ? (
-                    <BusyIcon />
-                  ) : (
-                    <ArrowLeftRight data-icon="inline-start" />
-                  )}
-                  Run real comparison
-                </Button>
-              </FieldGroup>
-            </form>
-          </details>
-          {data.job.kind === "distributed" && (
-            <div role="status" className="flex flex-col gap-2">
-              <Badge variant="outline">{data.job.status}</Badge>
-              <p className="text-sm">{data.job.message}</p>
-              {data.busy && (
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    void api("cancel", {}).catch((e) => setError(String(e)));
-                  }}
-                >
-                  Stop experiment
-                </Button>
-              )}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-      <div className="grid gap-4 md:grid-cols-2">
-        {cluster?.backends.map((b) => (
-          <Card key={b.id}>
-            <CardHeader>
-              <CardTitle>{b.name}</CardTitle>
-              <CardDescription>{b.status}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">{b.reason}</p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
       <Card>
         <CardHeader>
           <CardTitle>Connection & experiment journal</CardTitle>

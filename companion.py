@@ -210,7 +210,6 @@ def main():
     parser.add_argument('--name', default='Android companion')
     parser.add_argument('--host')
     parser.add_argument('--port', type=int, default=45460)
-    parser.add_argument('--rpc-binary', type=Path)
     parser.add_argument('--state', type=Path, default=Path.home()/'.locallens-companion')
     args = parser.parse_args()
     folder = args.state.expanduser().resolve(); folder.mkdir(mode=0o700, parents=True, exist_ok=True)
@@ -223,24 +222,8 @@ def main():
         with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
             sock.connect(('192.0.2.1', 9)); host = sock.getsockname()[0]
     lan_address(host)
-    rpc = None; log = folder/'rpc.log'; logstream = None
-    if args.rpc_binary:
-        binary = args.rpc_binary.expanduser().resolve(strict=True)
-        with socket.socket() as sock: sock.bind(('127.0.0.1', 0)); rpc_port = sock.getsockname()[1]
-        logstream = log.open('w')
-        rpc = subprocess.Popen([str(binary), '-H', '127.0.0.1', '-p', str(rpc_port)], stdout=logstream, stderr=logstream, env={**os.environ, 'GGML_RPC_DEBUG': '3', 'GGML_LOG_LEVEL': 'debug'})
-    else: rpc_port = None
-    state = Companion(args.name, rpc, rpc_port, log)
-    try:
-        if args.rpc_binary:
-            state.binary_sha256 = hashlib.sha256(binary.read_bytes()).hexdigest()
-            revision_file = binary.parents[2]/'locallens-build-revision.txt'
-            if revision_file.is_file(): state.build_record_revision = revision_file.read_text().strip()
-        server = make_server(host, args.port, cert, key, state)
-    except Exception:
-        if rpc: rpc.terminate(); rpc.wait(timeout=10)
-        if logstream: logstream.close()
-        raise
+    state = Companion(args.name)
+    server = make_server(host, args.port, cert, key, state)
     stop = threading.Event()
     threading.Thread(target=server.serve_forever, daemon=True).start()
     threading.Thread(target=discovery_loop, args=(server, stop), daemon=True).start()
@@ -269,9 +252,6 @@ def main():
             mdns[0].unregister_service(mdns[1]); mdns[0].close()
         for token in list(state.trusted): state.revoke(token)
         server.shutdown(); server.server_close()
-        if rpc:
-            rpc.terminate(); rpc.wait(timeout=10)
-        if logstream: logstream.close()
 
 
 if __name__ == '__main__': main()

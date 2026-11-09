@@ -29,7 +29,7 @@ class ExoBackend(Backend):
 class LlamaRPCBackend(Backend):
     id = 'llama-rpc'
     def describe(self):
-        return {'id': self.id, 'name': 'llama.cpp RPC', 'status': 'experimental', 'reason': 'CPU RPC worker is a candidate for Termux. Needs matching builds and a real phone experiment. Discovery and pairing alone do not prove inference.', 'revision': LLAMA_REVISION}
+        return {'id': self.id, 'name': 'llama.cpp RPC', 'status': 'unavailable', 'reason': 'Phone compute is disabled in this preview.', 'revision': LLAMA_REVISION}
 
 
 def budget(physical, available, phone=False):

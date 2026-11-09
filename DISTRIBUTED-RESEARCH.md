@@ -28,7 +28,7 @@ Verified license texts: [current Exo Apache-2.0](https://github.com/exo-explore/
 
 `connectnet.py`: nonce-bound IPv4 UDP discovery and exact pinned-certificate TLS requests. mDNS was considered, but custom UDP avoids a new Python service/dependency for this first prototype. This protocol discovers only our companion, not arbitrary Exo/mDNS devices.
 
-`companion.py`: OS-reported physical/available RAM with swap separate; CPU/OS metadata; runtime status; phone-side approval; session bearer authentication; revocation; fixed native-RPC forwarding. `android/setup-termux.sh` builds the pinned worker. No command execution or arbitrary destination forwarding is accepted over the network.
+`companion.py`: OS-reported physical/available RAM with swap separate; CPU/OS metadata; runtime status; phone-side approval; session bearer authentication; revocation; fixed native-RPC forwarding. The private experiment used a pinned Termux worker build. No command execution or arbitrary destination forwarding is accepted over the network.
 
 `cluster.py`: backend interface with explicit Exo-unsupported and llama-RPC-experimental adapters, discovered/paired/stale state, connection benchmark, memory inventory and local-only tunnel. Unknown pooled capacity remains null.
 

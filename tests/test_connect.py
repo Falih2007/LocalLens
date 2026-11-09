@@ -89,7 +89,12 @@ class ConnectPolicyTests(unittest.TestCase):
                     self.assertEqual(json.load(r)['devices'],[])
                 with urllib.request.urlopen(urllib.request.Request(base+'/api/connect/companion', headers=headers)) as r:
                     with zipfile.ZipFile(io.BytesIO(r.read())) as archive:
-                        self.assertEqual(set(archive.namelist()), {'companion.py','connectnet.py','android/setup-termux.sh','CONNECT-DEVICES.md'})
+                        self.assertEqual(set(archive.namelist()), {'companion.py','connectnet.py','CONNECT-DEVICES.md'})
+                request = urllib.request.Request(base+'/api/connect/experiment', data=b'{}', headers=headers)
+                with self.assertRaises(urllib.error.HTTPError) as e:
+                    urllib.request.urlopen(request)
+                self.assertEqual(e.exception.code, 403)
+                self.assertIn('Phone compute is unavailable', json.load(e.exception)['error'])
                 with patch.object(connectnet,'discover',return_value=[]):
                     request=urllib.request.Request(base+'/api/connect/scan',data=b'{}',headers={**headers,'Content-Type':'application/json'})
                     with urllib.request.urlopen(request) as r:self.assertEqual(json.load(r)['devices'],[])
