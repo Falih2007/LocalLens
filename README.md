@@ -2,6 +2,10 @@
 
 **Local AI benchmarking for Windows.** Run real models on your PC, compare CPU and GPU throughput, and test compatible models on an Intel NPU. LocalLens keeps the measurements on your machine and uses them to recommend a comfortable model from its automatic test catalogue.
 
+[**Download for Windows (x64)**](https://github.com/Falih2007/LocalLens/releases/tag/v0.3.2-preview.1)
+
+Download `LocalLens_0.3.2_x64-setup.exe` under **Assets** and run it. The installer includes Python and OpenVINO GenAI. It may download Microsoft WebView2 if needed. This preview is unsigned, so Windows may show an unrecognized publisher warning. The release includes `SHA256SUMS.txt` for checking your download.
+
 ![LocalLens automatic model benchmark page](docs/locallens-preview.png)
 
 ## Example measurements
@@ -19,7 +23,7 @@ On the same laptop, the installed OpenVINO benchmark ran **Qwen3 0.6B INT4** on 
 
 ## Try LocalLens
 
-- **Current Windows desktop source.** [Build LocalLens with Tauri](desktop/README.md). The installer can bundle Python and OpenVINO GenAI. Use the NPU build option to include the Intel runtime.
+- **Build the desktop app yourself.** [Build LocalLens with Tauri](desktop/README.md). Use the NPU build option to include the Intel runtime.
 - **Earlier downloadable preview.** The [0.2.0 ZIP](https://github.com/Falih2007/LocalLens/releases/tag/v0.2.0-preview.1) runs CPU/GPU tests on Windows x64 with Python 3.11+. Extract it and double-click **Start-LocalLens.cmd**.
 
 Choose **Run a Benchmark** to test CPU and GPU with the automatic catalogue.
