@@ -27,10 +27,12 @@ export function useAppState() {
       const next = await api<AppState>("state");
       setData(next);
       setError(null);
+      return next;
     } catch (e) {
       setError(
         e instanceof Error ? e.message : "Cannot reach the local engine.",
       );
+      return null;
     }
   }, []);
   useEffect(() => {
@@ -69,6 +71,7 @@ export function downloadResults(data: AppState) {
           schema_version: "1.0",
           results: data.history,
           automatic_scans: data.scans,
+          npu_results: data.npu_results ?? [],
         },
         null,
         2,

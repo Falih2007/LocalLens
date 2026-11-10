@@ -22,6 +22,7 @@ import { Input } from "@/components/ui/input";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { PageHeader, BusyIcon } from "@/components/shared";
 import { api } from "@/lib/api";
+import { number } from "@/lib/results";
 import type { AppState } from "@/lib/types";
 export type ManualConfig = {
   executable: string;
@@ -32,6 +33,7 @@ export type ManualConfig = {
 export function BenchmarkPage({
   data,
   onRun,
+  onRunNpu,
   onCancel,
   pending,
   draft,
@@ -39,6 +41,7 @@ export function BenchmarkPage({
 }: {
   data: AppState;
   onRun: (config: ManualConfig) => void;
+  onRunNpu: (model: string) => void;
   onCancel: () => void;
   pending: boolean;
   draft?: ManualConfig;
@@ -56,6 +59,7 @@ export function BenchmarkPage({
     setLocalDraft(next);
     onDraftChange?.(next);
   };
+  const [npuModel, setNpuModel] = useState("");
   const [probe, setProbe] = useState<{
       status: string;
       message: string;
@@ -63,6 +67,7 @@ export function BenchmarkPage({
     } | null>(null),
     [probing, setProbing] = useState(false);
   const busy = data.busy || pending;
+  const npuResult = data.npu_results?.find((result) => result.id === data.job.id);
   const submit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     onRun({
@@ -185,7 +190,7 @@ export function BenchmarkPage({
             <Button
               variant="outline"
               onClick={onCancel}
-              disabled={!data.busy || data.job.kind === "automatic" || pending}
+              disabled={!data.busy || Boolean(data.job.kind) || pending}
             >
               <Square data-icon="inline-start" />
               Cancel
@@ -208,7 +213,7 @@ export function BenchmarkPage({
               aria-live="polite"
               className="text-sm leading-relaxed text-muted-foreground"
             >
-              {data.job.kind !== "automatic" && data.job.message
+              {!data.job.kind && data.job.message
                 ? data.job.message
                 : "Choose a trusted engine and a local model. No scores appear until the engine returns valid measurements."}
             </p>
@@ -226,14 +231,14 @@ export function BenchmarkPage({
         <CardHeader>
           <div className="flex flex-wrap items-center gap-2">
             <CardTitle>Intel NPU runtime</CardTitle>
-            <Badge variant="outline">Capability check only</Badge>
+            <Badge variant="outline">{data.hardware.npus.length ? "Detected by Windows" : "Check runtime"}</Badge>
           </div>
           <CardDescription>
-            NPU benchmarking is not implemented. This checks optional OpenVINO
-            runtime availability.
+            Test an exported OpenVINO text model on Intel AI Boost using the optional OpenVINO GenAI runtime.
+            This test targets the NPU explicitly.
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="flex flex-col gap-4">
           {probe ? (
             <Alert>
               <Info />
@@ -249,8 +254,39 @@ export function BenchmarkPage({
               required.
             </p>
           )}
+          <form id="npu-form" onSubmit={(event) => {
+            event.preventDefault();
+            onRunNpu(npuModel.trim().replace(/^"|"$/g, ""));
+          }}>
+            <FieldGroup>
+              <Field data-disabled={busy}>
+                <FieldLabel htmlFor="npu-model">OpenVINO model folder</FieldLabel>
+                <Input id="npu-model" value={npuModel} onChange={(event) => setNpuModel(event.target.value)}
+                  placeholder="C:\AI\models\your-openvino-model" required disabled={busy} />
+                <FieldDescription>
+                  Choose a trusted local folder with exported XML/BIN model and tokenizer files. GGUF files use the CPU/GPU test.
+                </FieldDescription>
+              </Field>
+            </FieldGroup>
+          </form>
+          {data.job.kind === "npu" && (
+            <p role="status" className="text-sm text-muted-foreground">{data.job.message}</p>
+          )}
+          {npuResult && (
+            <p className="text-sm">
+              <strong>{npuResult.model.name}</strong> · {number(npuResult.generation_tokens_per_second, 2)} tok/s · {number(npuResult.time_to_first_token_ms)} ms to first token
+            </p>
+          )}
         </CardContent>
-        <CardFooter>
+        <CardFooter className="flex flex-wrap gap-2">
+          <Button type="submit" form="npu-form" disabled={busy || !npuModel.trim()}>
+            <Play data-icon="inline-start" />Run NPU benchmark
+          </Button>
+          {data.busy && data.job.kind === "npu" && (
+            <Button variant="outline" onClick={onCancel} disabled={pending || data.job.status !== "running"}>
+              <Square data-icon="inline-start" />Stop NPU test
+            </Button>
+          )}
           <Button
             variant="outline"
             onClick={() => void check()}

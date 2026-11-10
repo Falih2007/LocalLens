@@ -30,13 +30,21 @@ Windows CIM reads CPU name, logical processor count, total/free RAM and GPU adap
 
 WMI AdapterRAM is deliberately not used for GPU capacity because it can be misleading, especially with shared Intel Arc memory. The advisor estimates **CPU system-memory fit**, not GPU fit, model quality or speed. It uses roughly 0.60 bytes per parameter for Q4-class weights, adds 15% runtime overhead and 2 GiB workspace/context, and applies a 20% margin for “Likely fits.” Context, architecture, quantization and other workloads can change the requirement substantially. A listed model is never marked tested merely because a different GGUF was benchmarked.
 
-## Intel NPU adapter — honest scope
+## Intel NPU
 
-`openvino_adapter.py` is an isolated capability probe and a machine-readable adapter contract. The UI reports `unavailable` if OpenVINO is missing or no NPU is exposed, and lists devices/versions when available. **NPU benchmarking is not implemented in this release.** No NPU score or CPU fallback is fabricated.
+In **Manual benchmark**, use **Check OpenVINO runtime**, then enter the absolute
+path to a trusted local OpenVINO IR text-model folder. The optional runtime
+requires a compatible Intel NPU driver and OpenVINO GenAI. For desktop builds,
+see the [desktop build guide](../desktop/README.md). For the browser launcher,
+install the packages in `desktop/requirements-npu.txt` into the Python
+environment that runs LocalLens.
 
-To experiment with detection, optionally install compatible `openvino` and `openvino-genai` packages into the same Python environment and use Intel's supported NPU driver. This is not required for the rest of the app. GGUF files cannot be passed directly to OpenVINO GenAI; an appropriately exported, supported IR model plus tokenizer is required.
-
-The future execution contract is NPU-only LLMPipeline compilation, a warmup and three measured iterations with fixed prompt/token count, and native perf_metrics throughput/TTFT/generated-token counts. Compilation or architecture failures must remain explicit unsupported results. Reference: https://github.com/openvinotoolkit/openvino.genai/blob/master/samples/python/text_generation/benchmark_genai.py . This is a separate protocol and must not be represented as directly equivalent to llama-bench.
+The worker requests `NPU` directly, runs one warmup and three greedy prompt
+tests, and records engine-reported throughput, time to first token and token
+counts. Successful results are saved in `npu_result.json` and appear in the
+journal under **Intel NPU**. This separate protocol is outside the automatic
+CPU/GPU recommendation. A missing runtime, incompatible model or failed run
+produces no NPU score.
 
 ## Local data and schema
 
@@ -67,7 +75,7 @@ Project map: `app.py` (Windows probe, advisor, subprocess runner, local HTTP/API
 
 ## MVP boundaries
 
-This is a source-based Edge desktop-window prototype, not a packaged Tauri/Electron installer. No distributed inference, cloud sharing, quality leaderboard, NPU execution, live per-token progress or guaranteed GPU memory fit is included. Automatic setup downloads only the curated test catalogue. During a benchmark the UI shows truthful loading/running state; llama-bench does not provide reliable percentage progress. Advanced device selection is deferred; the engine chooses its default device(s).
+LocalLens runs in a browser launcher or as a native Tauri window on Windows x64. No distributed inference, cloud sharing, quality leaderboard, live per-token progress or guaranteed GPU memory fit is included. Automatic setup downloads only the curated test catalogue. During a benchmark the UI shows truthful loading/running state; llama-bench does not provide reliable percentage progress. Advanced device selection is deferred; the engine chooses its default device(s).
 
 The Benchmark journal combines completed automatic prompt-test attempts and manual llama-bench results, newest first. Each card labels its protocol; recommended automatic results are highlighted. Deleting a temporary model does not remove its saved test record.
 
@@ -79,4 +87,4 @@ Hardware readings and benchmark timings come from the current machine and engine
 
 After building the frontend, use `python package_project.py --runtime-only --output ../LocalLens-Windows-x64-preview.zip` to create the runnable Windows archive. Runtime `data/` is excluded by default; existing local reports remain untouched. Test fixtures are separate and never seed the live journal. New reports contain a hashed Windows device identifier (never the raw identifier). Only reports identified as belonging to this computer can supply its recommendation. Copied reports remain visible as Other computer; older reports without identity show Device unverified and require a new scan for a current recommendation.
 
-The automatic engine download targets Windows x64. Python 3.11+, internet access, adequate free disk/RAM and compatible drivers are required. GPU support depends on the driver; CPU can be tested separately. NPU execution remains unavailable. Another physical laptop has not been tested: alternate memory/device identities and a clean archive are verified through regression tests.
+The automatic engine download targets Windows x64. Python 3.11+, internet access, adequate free disk/RAM and compatible drivers are required. GPU support depends on the driver; CPU can be tested separately. Another physical laptop has not been tested: alternate memory/device identities and a clean archive are verified through regression tests.

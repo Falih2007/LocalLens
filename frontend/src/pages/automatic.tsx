@@ -37,6 +37,7 @@ import { number, gb, currentRecommendation } from "@/lib/results";
 import type { AppState } from "@/lib/types";
 export function AutomaticPage({
   data,
+  selectedScanId,
   onStart,
   onCancel,
   onEvidence,
@@ -44,6 +45,7 @@ export function AutomaticPage({
   pending,
 }: {
   data: AppState;
+  selectedScanId?: string;
   onStart: (mode: "quick" | "thorough") => void;
   onCancel: () => void;
   onEvidence: (title: string, value: unknown) => void;
@@ -54,8 +56,9 @@ export function AutomaticPage({
   const p = thorough ? data.thorough_plan : data.auto_plan,
     j = data.job,
     running = data.busy && j.kind === "automatic",
-    latest = data.scans.find(s=>s.device_scope==="current"),
-    recommended = currentRecommendation(data.scans);
+    selected = selectedScanId ? data.scans.find((scan) => scan.id === selectedScanId) : undefined,
+    latest = selected ?? data.scans.find((scan) => scan.device_scope === "current"),
+    recommended = selected ? (selected.recommendation ? selected : undefined) : currentRecommendation(data.scans);
   const message =
     j.kind === "automatic"
       ? j.status === "cancelled" && recommended

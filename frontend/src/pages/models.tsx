@@ -19,7 +19,7 @@ import { Info } from "lucide-react";
 import { PageHeader } from "@/components/shared";
 import { number } from "@/lib/results";
 import type { AppState } from "@/lib/types";
-export function ModelsPage({ data }: { data: AppState }) {
+export function ModelsPage({ data, runtimeAvailable }: { data: AppState; runtimeAvailable?: boolean }) {
   return (
     <div className="page-stack">
       <PageHeader
@@ -34,6 +34,11 @@ export function ModelsPage({ data }: { data: AppState }) {
           Q4-class weights at roughly 0.60 bytes per parameter, 15% runtime
           overhead and 2 GiB workspace. “Likely fits” leaves a 20% free-memory
           margin. Context and architecture can change requirements.
+          {runtimeAvailable !== undefined && (
+            <span className="mt-2 block">
+              Intel OpenVINO NPU runtime {runtimeAvailable ? "detected" : "unavailable"}. Use Manual benchmark to test a compatible OpenVINO model.
+            </span>
+          )}
         </AlertDescription>
       </Alert>
       <Card>

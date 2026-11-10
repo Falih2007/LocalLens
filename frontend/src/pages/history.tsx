@@ -52,13 +52,14 @@ export function HistoryPage({
         }
       />
       <Tabs value={filter} onValueChange={(v) => setFilter(String(v))}>
-        <TabsList aria-label="Filter test method">
+        <TabsList aria-label="Filter test method" className="h-auto flex-wrap">
           <TabsTrigger value="all">
             All tests{" "}
             <span className="text-muted-foreground">{rows.length}</span>
           </TabsTrigger>
           <TabsTrigger value="prompt">Real prompts</TabsTrigger>
           <TabsTrigger value="bench">llama-bench</TabsTrigger>
+          <TabsTrigger value="npu">Intel NPU</TabsTrigger>
         </TabsList>
       </Tabs>
       {!shown.length ? (
@@ -122,7 +123,7 @@ function ResultRow({
           <span className="text-xs text-muted-foreground">
             {deviceLabel(r.deviceScope)} · {r.method === "prompt"
               ? "Real prompt · automatic scan"
-              : "llama-bench · synthetic tokens"}
+              : r.method === "npu" ? "OpenVINO GenAI · real prompts" : "llama-bench · synthetic tokens"}
           </span>
           <span className="block max-w-sm text-xs leading-relaxed text-muted-foreground">
             {r.note}

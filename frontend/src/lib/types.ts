@@ -101,11 +101,22 @@ export type Advisor = {
   evidence: string;
   assumption: string;
 };
+export type NpuResult = {
+  id: string;
+  device_scope?: DeviceScope;
+  finished_at: string;
+  evidence: "measured";
+  model: { path: string; name: string };
+  generation_tokens_per_second: number;
+  time_to_first_token_ms: number;
+};
 export type AppState = {
+  onboarding_complete?: boolean;
   hardware: Hardware;
   busy: boolean;
   job: Job;
   history: ManualResult[];
+  npu_results?: NpuResult[];
   scans: Scan[];
   advisor: Advisor[];
   auto_plan: Plan;
@@ -116,7 +127,7 @@ export type JournalRow = {
   id: string;
   model: string;
   device: string;
-  method: "prompt" | "bench";
+  method: "prompt" | "bench" | "npu";
   finished: string;
   generation: number | null;
   prompt: number | null;

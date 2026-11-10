@@ -47,10 +47,27 @@ def advisor(h):
         out.append({'name':name,'parameters_b':b,'weights_gib':weights,'required_gib':needed,'status':status,'evidence':'estimated','assumption':'Q4-class weights (~0.60 bytes/parameter), 15% runtime overhead + 2 GiB context/workspace. CPU RAM fit only; architecture, context, quantization and GPU limits vary. No speed prediction.'})
     return out
 
+def openvino_command(*args):
+    if getattr(sys, 'frozen', False):
+        return [sys.executable, '--openvino-worker', *args]
+    return [sys.executable, str(ROOT/'openvino_adapter.py'), *args]
+
+
 def probe_openvino():
-    p=run([sys.executable,str(ROOT/'openvino_adapter.py'),'--probe'],45)
-    try: return json.loads(p.stdout)
-    except Exception: return {'status':'unavailable','message':p.stderr[-2000:] or 'Adapter did not return a response.'}
+    if getattr(sys, 'frozen', False):
+        from importlib.util import find_spec
+        if find_spec('openvino') is None:
+            return {'status':'unavailable','message':'The optional Intel OpenVINO runtime is not bundled.','devices':[]}
+    try:
+        p=subprocess.run(openvino_command(), capture_output=True, text=True, encoding='utf-8',
+                         errors='replace', timeout=45, stdin=subprocess.DEVNULL,
+                         creationflags=0x08000000 if os.name=='nt' else 0,
+                         env={**os.environ, 'PYINSTALLER_RESET_ENVIRONMENT':'1'})
+        if p.returncode:
+            raise RuntimeError(p.stderr.strip()[-1000:] or 'OpenVINO runtime exited unexpectedly.')
+        return json.loads(p.stdout)
+    except (OSError, subprocess.TimeoutExpired, ValueError, RuntimeError) as error:
+        return {'status':'unavailable','message':str(error),'devices':[]}
 
 def parse_bench(stdout, target):
     rows=json.loads(stdout)
@@ -67,16 +84,51 @@ def parse_bench(stdout, target):
         raise ValueError('Both prompt processing and generation measurements are required.')
     return metrics,rows
 
-def history():
+def history(filename='result.json'):
     result=[]
-    for f in sorted(DATA.glob('*/result.json'),reverse=True):
+    for f in sorted(DATA.glob('*/'+filename),reverse=True):
         try: result.append(device.annotate(json.loads(f.read_text(encoding='utf-8')),globals().get('HARDWARE',{})))
         except (ValueError,OSError): pass
     return result
 
-def worker(config, folder, h):
+def run_benchmark_process(args, folder, env=None):
+    global PROC
+    with (folder/'stdout.json').open('w',encoding='utf-8') as out, (folder/'stderr.log').open('w',encoding='utf-8') as err:
+        with LOCK:
+            if JOB['status']=='cancelled':
+                return None
+            PROC=subprocess.Popen(args,stdout=out,stderr=err,stdin=subprocess.DEVNULL,env=env,
+                                  creationflags=0x08000000 if os.name=='nt' else 0)
+        try:
+            return PROC.wait(timeout=1800)
+        except subprocess.TimeoutExpired:
+            PROC.kill()
+            PROC.wait()
+            raise RuntimeError('Benchmark exceeded the 30 minute limit.')
+
+
+def worker(config, folder, h=None, npu=False):
     global PROC, BUSY
     try:
+        if h is None:
+            h=hardware()
+        if npu:
+            from openvino_adapter import model_folder
+            model=model_folder(config['model'])
+            args=openvino_command('--model',str(model))
+            started=now()
+            JOB.update(message='Compiling the model on Intel NPU, then running one warmup and three measured prompts.')
+            code=run_benchmark_process(args,folder,{**os.environ,'PYINSTALLER_RESET_ENVIRONMENT':'1'})
+            if JOB['status']=='cancelled':
+                return
+            if code:
+                detail=(folder/'stderr.log').read_text(encoding='utf-8')[-2500:].strip()
+                raise RuntimeError('OpenVINO NPU test failed. '+detail)
+            result=json.loads((folder/'stdout.json').read_text(encoding='utf-8'))
+            result.update(schema_version='1.0',id=folder.name,started_at=started,
+                          finished_at=now(),hardware=h)
+            save_measurement(result,folder,'npu_result.json')
+            return
         executable=Path(config['executable']).expanduser().resolve()
         model=Path(config['model']).expanduser().resolve()
         if not executable.is_file() or executable.suffix.lower()!='.exe': raise ValueError('Choose a local llama-bench.exe file.')
@@ -88,23 +140,14 @@ def worker(config, folder, h):
         args=[str(executable),'-m',str(model),'-p','128','-n','32','-r','3','-t',str(threads),'-ngl','0' if target=='cpu' else '99','-o','json','-v','-nkvo','1' if target=='cpu' else '0']
         JOB.update(message='Loading model and running 3 repetitions. First load may take several minutes.',command=args)
         started=now()
-        with (folder/'stdout.json').open('w',encoding='utf-8') as out, (folder/'stderr.log').open('w',encoding='utf-8') as err:
-            with LOCK:
-                if JOB['status']=='cancelled': return
-                PROC=subprocess.Popen(args,stdout=out,stderr=err,creationflags=0x08000000 if os.name=='nt' else 0)
-            try: code=PROC.wait(timeout=1800)
-            except subprocess.TimeoutExpired:
-                PROC.kill(); PROC.wait(); raise RuntimeError('Benchmark exceeded the 30 minute limit.')
+        code=run_benchmark_process(args,folder)
         if JOB['status']=='cancelled': return
         if code: raise RuntimeError('llama-bench exited with code '+str(code)+'. '+(folder/'stderr.log').read_text(encoding='utf-8')[-3000:])
         metrics,raw=parse_bench((folder/'stdout.json').read_text(encoding='utf-8'),target)
         if target=='gpu' and not re.search(r'offloaded [1-9][0-9]*/[0-9]+ layers to GPU', (folder/'stderr.log').read_text(encoding='utf-8')):
             raise ValueError('GPU offload was not confirmed in the verbose engine log. No GPU score saved.')
         result={'schema_version':'1.0','id':folder.name,'evidence':'measured','engine':'llama-bench','started_at':started,'finished_at':now(),'target_requested':target,'model':{'path':str(model),'bytes':model.stat().st_size,'mtime_ns':model.stat().st_mtime_ns},'hardware':h,'command':args,'metrics':metrics,'raw':raw,'artifacts':{'stdout':'stdout.json','stderr':'stderr.log'},'limitations':['llama-bench excludes tokenization and sampling time.','GPU offload requested is not proof that every layer ran on the GPU; inspect stderr.log.']}
-        with LOCK:
-            if JOB['status']=='cancelled': return
-            tmp=folder/'result.tmp'; tmp.write_text(json.dumps(result,indent=2,allow_nan=False),encoding='utf-8'); tmp.replace(folder/'result.json')
-            JOB.update(status='completed',message='Measured result saved locally.',result_id=folder.name)
+        save_measurement(result,folder,'result.json')
     except Exception as e:
         if JOB['status']!='cancelled': JOB.update(status='failed',message=str(e))
     finally:
@@ -112,6 +155,34 @@ def worker(config, folder, h):
             PROC=None
             (folder/'job.json').write_text(json.dumps(JOB,indent=2),encoding='utf-8')
             BUSY=False
+
+def save_measurement(result, folder, filename):
+    with LOCK:
+        if JOB['status']=='cancelled':
+            return
+        temp=folder/'result.tmp'
+        temp.write_text(json.dumps(result,indent=2,allow_nan=False),encoding='utf-8')
+        temp.replace(folder/filename)
+        JOB.update(status='completed',message='Measured result saved locally.',result_id=folder.name)
+
+
+def onboarding_completed(hardware_snapshot):
+    try:
+        saved=json.loads((DATA/'onboarding.json').read_text(encoding='utf-8'))
+        return saved == {'version':1,'device_id':hardware_snapshot.get('device_id')}
+    except (OSError, ValueError):
+        return False
+
+
+def complete_onboarding(hardware_snapshot):
+    if hardware_snapshot.get('available_gib') is None:
+        raise ValueError('Available memory is required to complete setup.')
+    with LOCK:
+        DATA.mkdir(parents=True,exist_ok=True)
+        temp=DATA/'onboarding.tmp'
+        temp.write_text(json.dumps({'version':1,'device_id':hardware_snapshot.get('device_id')}),encoding='utf-8')
+        temp.replace(DATA/'onboarding.json')
+
 
 def scan_history():
     records=[]
@@ -171,7 +242,7 @@ class Handler(BaseHTTPRequestHandler):
         if self.path in ('/style.css','/app.js'):
             self.reply(200,(ROOT/'ui'/self.path[1:]).read_bytes(),'text/css' if self.path.endswith('css') else 'text/javascript'); return
         if not self.authorized(): self.reply(403,{'error':'Local session required'}); return
-        if self.path=='/api/state': self.reply(200,{'hardware':HARDWARE,'advisor':advisor(HARDWARE),'job':dict(JOB),'busy':BUSY,'history':history(),'auto_plan':autotest.plan(HARDWARE),'thorough_plan':autotest.plan(HARDWARE,'thorough'),'scans':scan_history()})
+        if self.path=='/api/state': self.reply(200,{'hardware':HARDWARE,'advisor':advisor(HARDWARE),'onboarding_complete':onboarding_completed(HARDWARE),'job':dict(JOB),'busy':BUSY,'history':history(),'npu_results':history('npu_result.json'),'auto_plan':autotest.plan(HARDWARE),'thorough_plan':autotest.plan(HARDWARE,'thorough'),'scans':scan_history()})
         elif self.path=='/api/openvino': self.reply(200,probe_openvino())
         elif self.path=='/api/connect/state': self.reply(200,CLUSTER.snapshot(HARDWARE))
         elif self.path=='/api/connect/guide': self.reply(200,{'text':(ROOT/'CONNECT-DEVICES.md').read_text(encoding='utf-8')})
@@ -187,7 +258,7 @@ class Handler(BaseHTTPRequestHandler):
             self.reply(200,archive.getvalue(),'application/zip')
         else: self.reply(404,{'error':'Not found'})
     def do_POST(self):
-        global BUSY
+        global BUSY,HARDWARE
         if not self.authorized(): self.reply(403,{'error':'Local session required'}); return
         try:
             size=int(self.headers.get('Content-Length','0'))
@@ -216,45 +287,97 @@ class Handler(BaseHTTPRequestHandler):
                     if BUSY: self.reply(409,{'error':'A test is already running'}); return
                     folder=DATA/(datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S')+'-scan-'+uuid.uuid4().hex[:8]); folder.mkdir(parents=True)
                     BUSY=True
-                    JOB.clear(); JOB.update(status='running',kind='automatic',stage='preparing',message='Checking memory and preparing your automatic test…',id=folder.name)
+                    JOB.clear(); JOB.update(status='running',kind='automatic',stage='preparing',message='Detecting your hardware and checking the memory reserve…',id=folder.name)
+                    accepted=dict(JOB)
                 threading.Thread(target=auto_worker,args=(folder,mode),daemon=True).start()
-                self.reply(202,dict(JOB))
-            elif self.path=='/api/run':
+                self.reply(202,accepted)
+            elif self.path in ('/api/run','/api/run-npu'):
+                npu=self.path=='/api/run-npu'
+                if npu and not isinstance(config.get('model'),str):
+                    raise ValueError('Choose an OpenVINO model folder.')
                 with LOCK:
                     if BUSY: self.reply(409,{'error':'A benchmark is already running'}); return
                     folder=DATA/(datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S')+'-'+uuid.uuid4().hex[:8]); folder.mkdir(parents=True)
                     BUSY=True
                     JOB.clear(); JOB.update(status='running',message='Validating local files.',id=folder.name)
-                threading.Thread(target=worker,args=(config,folder,hardware()),daemon=True).start()
-                self.reply(202,dict(JOB))
+                    if npu: JOB['kind']='npu'
+                    accepted=dict(JOB)
+                threading.Thread(target=worker,args=(config,folder,None,npu),daemon=True).start()
+                self.reply(202,accepted)
             elif self.path=='/api/cancel':
                 with LOCK:
+                    if 'id' in config and config['id'] != JOB.get('id'):
+                        self.reply(409,{'error':'This test is no longer active.'}); return
                     if JOB['status']=='running':
                         JOB.update(status='cancelled',message='Cancelled. No benchmark score was saved.')
                         if PROC: PROC.kill()
                 self.reply(200,dict(JOB))
             elif self.path=='/api/refresh':
-                global HARDWARE
                 HARDWARE=hardware(); self.reply(200,HARDWARE)
+            elif self.path=='/api/onboarding/complete':
+                complete_onboarding(HARDWARE)
+                self.reply(200,{'onboarding_complete':True})
             else: self.reply(404,{'error':'Not found'})
         except Exception as e: self.reply(400,{'error':str(e)})
 
-def main():
+def serve(desktop=False):
     global HARDWARE
     recovery=autotest.recover_temporary(DATA)
     HARDWARE=hardware()
     HARDWARE['warnings'].extend(recovery)
-    CLUSTER.start()
+    # Benchmarking needs only loopback. The desktop Devices page starts LAN discovery when opened.
+    if not desktop:
+        CLUSTER.start()
     server=ThreadingHTTPServer(('127.0.0.1',0),Handler)
     url=f'http://127.0.0.1:{server.server_port}'
-    print('LocalLens is running at '+url,flush=True)
-    if '--no-window' not in sys.argv:
+    if desktop:
+        def stop_with_parent():
+            sys.stdin.buffer.read(1)
+            server.shutdown()
+        threading.Thread(target=stop_with_parent,daemon=True).start()
+        print(f'LOCALLENS_READY {server.server_port}',flush=True)
+    else:
+        print('LocalLens is running at '+url,flush=True)
+    if not desktop and '--no-window' not in sys.argv:
         edge=next((p for p in [Path(os.environ.get('ProgramFiles(x86)',''))/'Microsoft/Edge/Application/msedge.exe',Path(os.environ.get('ProgramFiles',''))/'Microsoft/Edge/Application/msedge.exe'] if p.is_file()),None)
         if edge: subprocess.Popen([str(edge),'--app='+url,'--window-size=1280,900'])
         else: webbrowser.open(url)
     try: server.serve_forever()
     except KeyboardInterrupt:
         if PROC: PROC.kill()
-    finally: CLUSTER.close(); server.server_close()
+    finally:
+        if desktop:
+            with LOCK:
+                if JOB['status']=='running':
+                    JOB.update(status='cancelled',message='The desktop app was closed.')
+                    if PROC: PROC.kill()
+            deadline=time.monotonic()+4
+            while BUSY and time.monotonic()<deadline:
+                time.sleep(.05)
+        CLUSTER.close()
+        server.server_close()
+
+def main():
+    if len(sys.argv)>1 and sys.argv[1]=='--openvino-worker':
+        from openvino_adapter import main as openvino_main
+        openvino_main(sys.argv[2:])
+        return
+    if '--desktop-sidecar' not in sys.argv:
+        serve()
+        return
+    import msvcrt
+
+    if sys.stdin.buffer.read(1) != b'\x01':
+        raise RuntimeError('The desktop supervisor did not authorize startup.')
+    if not (ROOT/'frontend/dist/index.html').is_file():
+        raise RuntimeError('The installed frontend is missing. Reinstall LocalLens.')
+    DATA.mkdir(parents=True,exist_ok=True)
+    with (DATA/'.desktop.lock').open('a+b') as lock:
+        lock.seek(0)
+        try:
+            msvcrt.locking(lock.fileno(),msvcrt.LK_NBLCK,1)
+        except OSError:
+            raise RuntimeError('LocalLens is already using this desktop data folder.') from None
+        serve(desktop=True)
 
 if __name__=='__main__': main()

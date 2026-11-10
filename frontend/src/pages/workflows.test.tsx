@@ -94,6 +94,7 @@ describe("preserved frontend workflows", () => {
         data={fixture()}
         pending={false}
         onRun={onRun}
+        onRunNpu={vi.fn()}
         onCancel={vi.fn()}
       />,
     );
@@ -116,6 +117,24 @@ describe("preserved frontend workflows", () => {
       threads: 8,
     });
   });
+  it("submits an OpenVINO folder through the separate NPU action", async () => {
+    const onRun = vi.fn();
+    const onRunNpu = vi.fn();
+    render(
+      <BenchmarkPage
+        data={fixture()}
+        pending={false}
+        onRun={onRun}
+        onRunNpu={onRunNpu}
+        onCancel={vi.fn()}
+      />,
+    );
+    const folder = "C:\\AI\\OpenVINO model";
+    await userEvent.type(screen.getByLabelText("OpenVINO model folder"), folder);
+    await userEvent.click(screen.getByRole("button", { name: "Run NPU benchmark" }));
+    expect(onRunNpu).toHaveBeenCalledWith(folder);
+    expect(onRun).not.toHaveBeenCalled();
+  });
   it("reports the NPU runtime as unavailable without inventing a score", async () => {
     vi.mocked(api).mockResolvedValue({
       status: "unavailable",
@@ -127,6 +146,7 @@ describe("preserved frontend workflows", () => {
         data={fixture()}
         pending={false}
         onRun={vi.fn()}
+        onRunNpu={vi.fn()}
         onCancel={vi.fn()}
       />,
     );

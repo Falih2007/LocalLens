@@ -1,0 +1,14 @@
+html { color-scheme: light dark; }
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  font: 1rem "Segoe UI", sans-serif;
+  background: Canvas;
+  color: CanvasText;
+  text-align: center;
+}
+main { padding: 1.5rem; }
+h1 { font-size: 1.75rem; margin: 0 0 .5rem; }
+progress { width: min(14rem, 70vw); }

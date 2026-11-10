@@ -55,6 +55,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { EvidenceDialog, BusyIcon } from "@/components/shared";
 import { OverviewPage } from "@/pages/overview";
+import { OnboardingPage, type OnboardingResult } from "@/pages/onboarding";
 const AutomaticPage = lazy(() =>
   import("@/pages/automatic").then((module) => ({
     default: module.AutomaticPage,
@@ -74,6 +75,7 @@ const HistoryPage = lazy(() =>
 );
 import { api, useAppState } from "@/lib/api";
 import { useTheme } from "@/lib/theme";
+import { journalRows } from "@/lib/results";
 import type { Theme } from "@/lib/theme";
 const ConnectPage = lazy(() =>
   import("@/pages/connect").then((module) => ({ default: module.ConnectPage })),
@@ -153,8 +155,7 @@ function WorkspaceNav({
     </Sidebar>
   );
 }
-function ThemeMenu() {
-  const { theme, setTheme } = useTheme();
+function ThemeMenu({ theme, setTheme }: { theme: Theme; setTheme: (theme: Theme) => void }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
@@ -190,6 +191,11 @@ function ThemeMenu() {
 }
 export default function App() {
   const { data, error, refresh } = useAppState();
+  const appearance = useTheme();
+  const [showOnboarding, setShowOnboarding] = useState<boolean | null>(null);
+  const [revisitingModes, setRevisitingModes] = useState(false);
+  const [onboarding, setOnboarding] = useState<OnboardingResult | null>(null);
+  const [selectedScanId, setSelectedScanId] = useState<string>();
   const [page, setPage] = useState<Page>(currentPage),
     [pending, setPending] = useState(false),
     [actionError, setActionError] = useState<string | null>(null),
@@ -227,6 +233,7 @@ export default function App() {
     }
   };
   const start = (mode: "quick" | "thorough" = "quick") => {
+    setSelectedScanId(undefined);
     navigate("automatic");
     void act("auto", { mode });
   };
@@ -248,6 +255,57 @@ export default function App() {
       setRefreshing(false);
     }
   };
+  useEffect(() => {
+    if (showOnboarding === null && data) {
+      const hasLocalResults = journalRows(data).some((row) => row.deviceScope === "current");
+      setShowOnboarding(!data.onboarding_complete && !hasLocalResults);
+    }
+  }, [data, showOnboarding]);
+
+  useEffect(() => {
+    if (showOnboarding === false) document.getElementById("main-content")?.focus();
+  }, [showOnboarding]);
+
+  if (showOnboarding === null) {
+    return (
+      <main className="grid min-h-dvh place-items-center p-6">
+        {error ? (
+          <Alert variant="destructive" className="max-w-md">
+            <TriangleAlert />
+            <AlertTitle>LocalLens couldn’t connect</AlertTitle>
+            <AlertDescription>
+              {error}
+              <Button variant="outline" onClick={() => void refresh()}>Retry</Button>
+            </AlertDescription>
+          </Alert>
+        ) : <p role="status" className="text-sm text-muted-foreground">Opening LocalLens…</p>}
+      </main>
+    );
+  }
+
+  if (showOnboarding) {
+    return (
+      <div className="relative">
+        <div className="absolute top-4 right-4">
+          <ThemeMenu {...appearance} />
+        </div>
+        <OnboardingPage
+          data={data}
+          error={error}
+          refresh={refresh}
+          onBack={revisitingModes ? () => setShowOnboarding(false) : undefined}
+          onComplete={(result) => {
+            setOnboarding(result);
+            setShowOnboarding(false);
+            setSelectedScanId(result.mode === "benchmark" ? result.scanId : undefined);
+            navigate(result.mode === "benchmark" ? "automatic" : "models");
+            window.scrollTo({ top: 0 });
+          }}
+        />
+      </div>
+    );
+  }
+
   return (
     <TooltipProvider>
       <SidebarProvider>
@@ -262,7 +320,7 @@ export default function App() {
           Skip to content
         </a>
         <WorkspaceNav page={page} navigate={navigate} />
-        <SidebarInset className="min-w-0">
+        <SidebarInset className="min-w-0 motion-safe:animate-in motion-safe:fade-in motion-safe:duration-200">
           <header className="flex h-16 shrink-0 items-center justify-between gap-3 border-b px-4 md:px-8">
             <div className="flex min-w-0 items-center gap-3">
               <SidebarTrigger aria-label="Toggle navigation" />
@@ -276,6 +334,16 @@ export default function App() {
               </span>
             </div>
             <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" disabled={pending || refreshing || data?.busy} onClick={() => {
+                setActionError(null);
+                setOnboarding(null);
+                setRevisitingModes(true);
+                setShowOnboarding(true);
+                window.scrollTo({ top: 0 });
+              }}>
+                <ScanLine data-icon="inline-start" />
+                Test modes
+              </Button>
               <Badge variant="outline" className="hidden sm:inline-flex">
                 <span className="size-1.5 rounded-full bg-foreground" />
                 {error
@@ -300,7 +368,7 @@ export default function App() {
                 </TooltipTrigger>
                 <TooltipContent>Refresh detected hardware</TooltipContent>
               </Tooltip>
-              <ThemeMenu />
+              <ThemeMenu {...appearance} />
             </div>
           </header>
           <div
@@ -359,6 +427,7 @@ export default function App() {
                 {page === "automatic" && (
                   <AutomaticPage
                     data={data}
+                    selectedScanId={selectedScanId}
                     onStart={start}
                     onCancel={cancel}
                     pending={pending}
@@ -369,13 +438,16 @@ export default function App() {
                 {page === "connect" && (
                   <ConnectPage data={data} onEvidence={inspect} />
                 )}
-                {page === "models" && <ModelsPage data={data} />}{" "}
+                {page === "models" && (
+                  <ModelsPage data={data} runtimeAvailable={onboarding?.mode === "predict" ? onboarding.runtimeAvailable : undefined} />
+                )}{" "}
                 {page === "benchmark" && (
                   <BenchmarkPage
                     data={data}
                     draft={manualDraft}
                     onDraftChange={setManualDraft}
                     onRun={manual}
+                    onRunNpu={(model) => void act("run-npu", { model })}
                     onCancel={cancel}
                     pending={pending}
                   />

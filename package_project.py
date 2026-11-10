@@ -1,14 +1,22 @@
 from pathlib import Path
 import argparse,os,zipfile
 ROOT=Path(__file__).resolve().parent
-EXCLUDED={'node_modules','__pycache__','.vite','.git','.codex','.gradle','build'}
+EXCLUDED={'node_modules','__pycache__','.vite','.git','.codex','.gradle','build','.desktop-python'}
+NATIVE_BUILD_DIRS={
+    Path('desktop/.build'),
+    Path('desktop/src-tauri/gen'),
+    Path('desktop/src-tauri/sidecar'),
+    Path('desktop/src-tauri/target'),
+}
 def package(destination,include_results=False):
     destination=Path(destination).resolve()
     if destination.is_relative_to(ROOT):raise ValueError('Write the archive outside the source project.')
     destination.parent.mkdir(parents=True,exist_ok=True)
     with zipfile.ZipFile(destination,'w',zipfile.ZIP_DEFLATED) as z:
         for base,dirs,files in os.walk(ROOT):
-            dirs[:]=[d for d in dirs if d not in EXCLUDED and not (Path(base)==ROOT and d=='data' and not include_results)]
+            relative=Path(base).relative_to(ROOT)
+            dirs[:]=[d for d in dirs if d not in EXCLUDED and relative/d not in NATIVE_BUILD_DIRS
+                     and not (Path(base)==ROOT and d=='data' and not include_results)]
             for name in files:
                 f=Path(base)/name
                 if f.suffix in {'.pyc','.tsbuildinfo','.jks','.keystore'} or name.startswith('.env') or name=='local.properties':continue
@@ -29,7 +37,7 @@ def package_runtime(destination):
         'ui/index.html', 'ui/app.js', 'ui/style.css',
         'licenses/shadcn-ui-MIT.md', 'licenses/geist-OFL.txt',
         'licenses/tailwindcss-MIT.txt', 'licenses/tw-animate-css-MIT.txt',
-        'android/companion/README.md', 'docs/locallens-preview.png',
+        'android/companion/README.md', 'desktop/README.md', 'docs/locallens-preview.png',
         'docs/benchmark-methodology.md', 'docs/benchmark-results.md',
         'docs/DESIGN.md', 'docs/DEVICES-ARCHITECTURE.md', 'docs/DEVICES-TESTING.md',
         'docs/DISTRIBUTED-RESEARCH.md', 'docs/FRONTEND.md', 'docs/TESTING.md',

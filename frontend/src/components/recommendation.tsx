@@ -29,20 +29,21 @@ export function RecommendationCard({
         <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
           <Badge variant="secondary">
             <Check data-icon="inline-start" />
-            Measured recommendation
+            Measured
           </Badge>
           <span className="text-xs text-muted-foreground">
             {date(scan.finished_at)}
           </span>
         </div>
-        <CardTitle>
+        <CardTitle>Your best tested model</CardTitle>
+        <p className="text-xl font-semibold tracking-tight">
           {r.model.name}{" "}
-          <span className="font-normal text-muted-foreground">
+          <span className="text-sm font-normal text-muted-foreground">
             / {r.model.quantization}
           </span>
-        </CardTitle>
+        </p>
         <CardDescription>
-          A comfortable fit on {r.target.toUpperCase()} in this scan.
+          Runs comfortably on your {r.target.toUpperCase()} based on this benchmark.
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-5">

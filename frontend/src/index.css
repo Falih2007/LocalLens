@@ -185,3 +185,11 @@
     scroll-behavior: auto !important;
   }
 }
+
+@keyframes onboarding-sweep {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(300%); }
+}
+.onboarding-progress {
+  animation: onboarding-sweep 1.35s ease-in-out infinite;
+}

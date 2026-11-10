@@ -2,7 +2,7 @@ import type { AppState, JournalRow } from "./types";
 const valid = (n: unknown): n is number =>
   typeof n === "number" && Number.isFinite(n) && n > 0;
 export function journalRows(
-  state: Pick<AppState, "history" | "scans">,
+  state: Pick<AppState, "history" | "scans" | "npu_results">,
 ): JournalRow[] {
   const rows: JournalRow[] = state.history.map((r) => ({
     deviceScope:r.device_scope??"unverified",
@@ -53,6 +53,23 @@ export function journalRows(
           attempt: a,
         },
       });
+    });
+  }
+  for (const result of state.npu_results ?? []) {
+    if (result.evidence !== "measured" || !valid(result.generation_tokens_per_second)) continue;
+    rows.push({
+      deviceScope: result.device_scope ?? "unverified",
+      id: `npu:${result.id}`,
+      model: result.model.name,
+      device: "NPU",
+      method: "npu",
+      finished: result.finished_at,
+      generation: result.generation_tokens_per_second,
+      prompt: null,
+      freeRam: null,
+      recommended: false,
+      note: `Time to first token: ${number(result.time_to_first_token_ms)} ms · 3 measured prompts`,
+      evidence: result,
     });
   }
   return rows.sort((a, b) => Date.parse(b.finished) - Date.parse(a.finished));

@@ -26,8 +26,20 @@ frontend/dist/
 *.keystore
 *.log
 *.gguf
+*.safetensors
+*.onnx
+*.bin
+openvino_*.xml
 *.apk
 *.aab
 *.exe
+*.msi
 *.dll
 *.zip
+
+# Native desktop build artifacts.
+/desktop/src-tauri/target/
+/desktop/src-tauri/sidecar/
+/desktop/.build/
+/.desktop-python/
+/desktop/src-tauri/gen/
